@@ -27,7 +27,7 @@
 
 from flask import Flask, request, jsonify
 
-import mongoengine as me
+from flask_mongoengine import MongoEngine
 from mongoengine import errors
 
 import json
@@ -45,16 +45,9 @@ try:
     app.config.from_envvar('COWRIE_API_SETTINGS')
 except:
     pass
+db = MongoEngine(app)
 
 VERSION = app.config.get("API_VERSION")
-
-me.connect(
-    app.config.get("MONGO_DB"),
-    host=app.config.get("MONGO_HOST"),
-    port=app.config.get("MONGO_PORT"),
-    username=app.config.get("MONGO_USER"),
-    password=app.config.get("MONGO_PASS"),
-)
 
 
 @app.route("/{0}/log".format(VERSION), methods=["POST"])
@@ -78,6 +71,7 @@ def log_entry():
                                 'cowrie.session.closed',
                                 'cowrie.log.closed',
                                 'cowrie.client.fingerprint']:
+
             session.update(**entry["payload"])
             session.reload()
             return session.to_json()
@@ -117,46 +111,3 @@ def log_entry():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-{
-    "eventid": "eventid",
-    "payload": {
-        "session": "string",
-        "start_time": "datetime",
-        "source_ip": "string",
-        "sensor_ip": "string",
-        "commands": [
-            {
-                "timestamp": "datetime",
-                "command": "string",
-                "success": "boolean"
-            }
-        ],
-        "loggedin": "boolean",
-        "end_time": "datetime",
-        "credentials": {
-            "username": "string",
-            "password": "string"
-        },
-        "downloads": [
-            {
-                "timestamp": "datetime",
-                "realm": "string",
-                "shasum": "string",
-                "url": "string",
-                "outfile": "string",
-                "success": "boolean"
-            }
-        ],
-        "ttylog": {
-            "size": "string",
-            "ttylog": "string"
-        },
-        "version": "string",
-        "ttysize": {
-            "width": "string",
-            "height": "string"
-        },
-        "fingerprint": "string"
-    }
-}

@@ -6,11 +6,9 @@ HOST = "0.0.0.0"
 PORT = 5000
 
 # Mongo
-MONGO_HOST = "iad1-mongos0.objectrocket.com"
-MONGO_PORT = 16008
-MONGO_USER = "cowrieapi"
-MONGO_PASS = "Hd82sRVd6AjkZNyaXZKb0V3RPUpwbw"
-MONGO_DB = "cowrieapi"
+MONGODB_SETTINGS = {
+    'db': 'test',
+}
 
 # Application Settings
 PASSWORD_LENGTH = 24
