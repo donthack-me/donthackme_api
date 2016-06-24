@@ -181,7 +181,8 @@ class TtyLog(me.EmbeddedDocument):
     """TTY Log Subdocument."""
 
     size = me.IntField()
-    log = me.StringField()
+    log_location = me.StringField()
+    log_binary = me.BinaryField()
 
 
 class Session(me.Document):
@@ -193,8 +194,12 @@ class Session(me.Document):
     source_ip = me.StringField()
     sensor_ip = me.StringField()
     ttylog = me.EmbeddedDocumentField(TtyLog)
-    version = me.StringField()
     ttysize = me.EmbeddedDocumentField(TtySize)
+
+    ssh_version = me.StringField()
+    ssh_kexAlgs = me.ListField(me.StringField())
+    ssh_keyAlgs = me.ListField(me.StringField())
+    ssh_macCS = me.ListField(me.StringField())
 
     sensor = me.ReferenceField(Sensor)
     fingerprints = me.ListField(me.ReferenceField(Fingerprint))
@@ -221,7 +226,10 @@ class Session(me.Document):
         response["start_time"] = self.start_time.isoformat()
         if "end_time" in response:
             response["end_time"] = self.end_time.isoformat()
+
         response.pop("_id", None)
+        if "ttylog" in response:
+            response["ttylog"].pop("log_binary", None)
 
         response["sensor"] = self.sensor.to_dict()
         response["fingerprints"] = [item.to_dict() for

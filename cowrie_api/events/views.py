@@ -25,6 +25,7 @@ from cowrie_api.models import (Sensor,
                                Download,
                                Fingerprint)
 
+import base64
 import json
 
 events = Blueprint('events', __name__, url_prefix="/events")
@@ -57,7 +58,6 @@ def session_connect():
 
 @events.route("/client/version", methods=["PUT"])
 @events.route("/client/size", methods=["PUT"])
-@events.route("/log/closed", methods=["PUT"])
 @events.route("/session/closed", methods=["PUT"])
 @auth.requires_auth
 def update_session():
@@ -67,10 +67,10 @@ def update_session():
     This includes:
         cowrie.client.version
         cowrie.client.size
-        cowrie.log.closed
         cowrie.session.closed
     """
     payload = request.get_json()
+
     try:
         session = Session.objects.get(
             session=payload["session"],
@@ -80,6 +80,36 @@ def update_session():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
+    session.update(**payload)
+    session.reload()
+    return session.to_json()
+
+
+@events.route("/log/closed", methods=["PUT"])
+@auth.requires_auth
+def close_ttylog():
+    """
+    Process log closure.
+
+    This processing is special as it requires the decoding of
+    the binary log file before insertion.
+
+    This includes:
+        cowrie.log.closed
+    """
+    payload = request.get_json()
+
+    try:
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor_ip=payload["sensor_ip"]
+        )
+    except errors.DoesNotExist:
+        msg = "Session {0} Not Found.".format(payload["session"])
+        return jsonify(error=msg), 404
+
+    b64_ttylog = payload["ttylog"].pop("log_base64")
+    payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
     session.reload()
     return session.to_json()
