@@ -170,6 +170,29 @@ class Download(me.Document):
         return json.dumps(self.to_dict())
 
 
+class TcpConnection(me.Document):
+    """TcpConnection Subdocument (Listed)."""
+
+    session = me.ReferenceField('Session')
+    sensor_ip = me.StringField()
+    timestamp = me.DateTimeField()
+    dest_port = me.IntField()
+    dest_ip = me.StringField()
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        response.pop("sensor_ip", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
+
+
 class TtySize(me.EmbeddedDocument):
     """TTY Size Subdocument."""
 
@@ -206,6 +229,7 @@ class Session(me.Document):
     commands = me.ListField(me.ReferenceField(Command))
     credentials = me.ListField(me.ReferenceField(Credentials))
     downloads = me.ListField(me.ReferenceField(Download))
+    tcpconnections = me.ListField(me.ReferenceField(TcpConnection))
 
     meta = {
         "indexes": [
@@ -240,6 +264,8 @@ class Session(me.Document):
                                    item in self.credentials]
         response["downloads"] = [item.to_dict() for
                                  item in self.downloads]
+        response["tcpconnections"] = [item.to_dict() for
+                                      item in self.tcpconnections]
 
         return response
 

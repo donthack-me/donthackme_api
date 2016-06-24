@@ -23,7 +23,8 @@ from cowrie_api.models import (Sensor,
                                Credentials,
                                Command,
                                Download,
-                               Fingerprint)
+                               Fingerprint,
+                               TcpConnection)
 
 import base64
 import json
@@ -53,7 +54,7 @@ def session_connect():
         msg = "Session {0} Already Exists".format(payload["session"])
         return jsonify(error=msg), 409
     session.reload()
-    return session.to_json()
+    return session.to_json(), 201
 
 
 @events.route("/client/version", methods=["PUT"])
@@ -82,7 +83,7 @@ def update_session():
 
     session.update(**payload)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
 
 
 @events.route("/log/closed", methods=["PUT"])
@@ -112,7 +113,7 @@ def close_ttylog():
     payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
 
 
 @events.route("/login/success", methods=["PUT"])
@@ -139,7 +140,7 @@ def add_login_attempt():
     creds = Credentials.from_json(json.dumps(payload)).save()
     session.update(push__credentials=creds)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
 
 
 @events.route("/command/success", methods=["PUT"])
@@ -166,7 +167,7 @@ def add_command():
     cmd = Command.from_json(json.dumps(payload)).save()
     session.update(push__commands=cmd)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
 
 
 @events.route("/session/file_download", methods=["PUT"])
@@ -191,7 +192,7 @@ def add_download():
     download = Download.from_json(json.dumps(payload)).save()
     session.update(push__downloads=download)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
 
 
 @events.route("/client/fingerprint", methods=["PUT"])
@@ -216,4 +217,27 @@ def add_fingerprint():
     fingerprint = Fingerprint.from_json(json.dumps(payload)).save()
     session.update(push__fingerprints=fingerprint)
     session.reload()
-    return session.to_json()
+    return session.to_json(), 202
+
+
+@events.route("/cdirect-tcpip/request")
+def add_connection():
+    """
+    Process non-SSH connection.
+
+    This includes:
+        cowrie.direct-tcpip.request
+    """
+    payload = request.get_json()
+    try:
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor_ip=payload["sensor_ip"]
+        )
+    except errors.DoesNotExist:
+        msg = "Session {0} Not Found.".format(payload["session"])
+        return jsonify(error=msg), 404
+    tcp = TcpConnection.from_json(json.dumps(payload)).save()
+    session.update(push__tcpconnections=tcp)
+    session.reload()
+    return session.to_json(), 202
