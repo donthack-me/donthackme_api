@@ -46,6 +46,7 @@ class Command(me.Document):
     """Command Subdocument (Listed)."""
 
     session = me.ReferenceField('Session')
+    sensor_ip = me.StringField()
     timestamp = me.DateTimeField(required=True)
     command = me.StringField()
     success = me.BooleanField()
@@ -65,6 +66,7 @@ class Command(me.Document):
 
         response["timestamp"] = self.timestamp.isoformat()
         response.pop("_id", None)
+        response.pop("sensor_ip", None)
         return response
 
     def to_json(self):
@@ -76,6 +78,7 @@ class Credentials(me.Document):
     """Credential Subdocument."""
 
     session = me.ReferenceField('Session')
+    sensor_ip = me.StringField()
     username = me.StringField()
     password = me.StringField()
     success = me.BooleanField()
@@ -96,6 +99,7 @@ class Credentials(me.Document):
 
         response["timestamp"] = self.timestamp.isoformat()
         response.pop("_id", None)
+        response.pop("sensor_ip", None)
         return response
 
     def to_json(self):
@@ -107,6 +111,7 @@ class Fingerprint(me.Document):
     """Fingerprint Subdocument."""
 
     session = me.ReferenceField('Session')
+    sensor_ip = me.StringField()
     username = me.StringField()
     fingerprint = me.StringField()
     timestamp = me.DateTimeField()
@@ -125,6 +130,7 @@ class Fingerprint(me.Document):
 
         response["timestamp"] = self.timestamp.isoformat()
         response.pop("_id", None)
+        response.pop("sensor_ip", None)
         return response
 
     def to_json(self):
@@ -136,6 +142,7 @@ class Download(me.Document):
     """Download Subdocument (Listed)."""
 
     session = me.ReferenceField('Session')
+    sensor_ip = me.StringField()
     timestamp = me.DateTimeField()
     realm = me.StringField()
     shasum = me.StringField()
@@ -155,6 +162,7 @@ class Download(me.Document):
 
         response["timestamp"] = self.timestamp.isoformat()
         response.pop("_id", None)
+        response.pop("sensor_ip", None)
         return response
 
     def to_json(self):

@@ -95,7 +95,10 @@ def add_login_attempt():
     """
     payload = request.get_json()
     try:
-        session = Session.objects.get(session=payload["session"])
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor=payload["sensor_ip"]
+        )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
@@ -119,7 +122,10 @@ def add_command():
     """
     payload = request.get_json()
     try:
-        session = Session.objects.get(session=payload["session"])
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor=payload["sensor_ip"]
+        )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
@@ -141,7 +147,10 @@ def add_download():
     """
     payload = request.get_json()
     try:
-        session = Session.objects.get(session=payload["session"])
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor=payload["sensor_ip"]
+        )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
@@ -163,7 +172,10 @@ def add_fingerprint():
     """
     payload = request.get_json()
     try:
-        session = Session.objects.get(session=payload["session"])
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor=payload["sensor_ip"]
+        )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
