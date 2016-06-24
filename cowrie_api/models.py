@@ -145,7 +145,6 @@ class Download(me.Document):
     meta = {
         "indexes": [
             {"fields": ["session"]},
-            {"fields": ["success"]},
             {"fields": ["timestamp"]}
         ]
     }
