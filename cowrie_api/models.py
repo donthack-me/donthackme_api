@@ -199,7 +199,7 @@ class Session(me.Document):
         "indexes": [
             {
                 "fields": ["session", "sensor_ip"],
-                "unique": Truecd""
+                "unique": True
             },
             {"fields": ["source_ip"]},
             {"fields": ["sensor_ip"]},
