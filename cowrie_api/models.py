@@ -13,49 +13,168 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import json
 import mongoengine as me
 
 
-class Command(me.EmbeddedDocument):
+class Sensor(me.Document):
+    """Register all Sensors."""
+
+    timestamp = me.DateTimeField(required=True)
+    ip = me.StringField(required=True)
+
+    meta = {
+        "indexes": [
+            {"fields": ["ip"], "unique": True},
+        ]
+    }
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
+
+
+class Command(me.Document):
     """Command Subdocument (Listed)."""
 
+    session = me.ReferenceField('Session')
     timestamp = me.DateTimeField(required=True)
     command = me.StringField()
     success = me.BooleanField()
 
+    meta = {
+        "indexes": [
+            {"fields": ["session"]},
+            {"fields": ["command"]},
+            {"fields": ["success"]},
+            {"fields": ["timestamp"]}
+        ]
+    }
 
-class Credentials(me.EmbeddedDocument):
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
+
+
+class Credentials(me.Document):
     """Credential Subdocument."""
 
+    session = me.ReferenceField('Session')
     username = me.StringField()
     password = me.StringField()
     success = me.BooleanField()
     timestamp = me.DateTimeField()
 
+    meta = {
+        "indexes": [
+            {"fields": ["session"]},
+            {"fields": ["success"]},
+            {"fields": ["username"]},
+            {"fields": ["timestamp"]}
+        ]
+    }
 
-class Download(me.EmbeddedDocument):
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
+
+
+class Fingerprint(me.Document):
+    """Fingerprint Subdocument."""
+
+    session = me.ReferenceField('Session')
+    username = me.StringField()
+    fingerprint = me.StringField()
+    timestamp = me.DateTimeField()
+
+    meta = {
+        "indexes": [
+            {"fields": ["session"]},
+            {"fields": ["username"]},
+            {"fields": ["timestamp"]}
+        ]
+    }
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
+
+
+class Download(me.Document):
     """Download Subdocument (Listed)."""
 
+    session = me.ReferenceField('Session')
     timestamp = me.DateTimeField()
     realm = me.StringField()
     shasum = me.StringField()
     url = me.StringField()
     outfile = me.StringField()
-    success = me.BooleanField()
+
+    meta = {
+        "indexes": [
+            {"fields": ["session"]},
+            {"fields": ["success"]},
+            {"fields": ["timestamp"]}
+        ]
+    }
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["timestamp"] = self.timestamp.isoformat()
+        response.pop("_id", None)
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())
 
 
 class TtySize(me.EmbeddedDocument):
     """TTY Size Subdocument."""
 
-    width = me.StringField()
-    height = me.StringField()
+    width = me.IntField()
+    height = me.IntField()
 
 
 class TtyLog(me.EmbeddedDocument):
     """TTY Log Subdocument."""
 
     size = me.StringField()
-    ttylog = me.StringField()
+    log = me.StringField()
 
 
 class Session(me.Document):
@@ -66,21 +185,49 @@ class Session(me.Document):
     end_time = me.DateTimeField()
     source_ip = me.StringField()
     sensor_ip = me.StringField()
-    commands = me.EmbeddedDocumentListField(Command)
-    credentials = me.EmbeddedDocumentListField(Credentials)
-    downloads = me.EmbeddedDocumentListField(Download)
     ttylog = me.EmbeddedDocumentField(TtyLog)
     version = me.StringField()
     ttysize = me.EmbeddedDocumentField(TtySize)
-    fingerprint = me.StringField()
+
+    sensor = me.ReferenceField(Sensor)
+    fingerprints = me.ListField(me.ReferenceField(Fingerprint))
+    commands = me.ListField(me.ReferenceField(Command))
+    credentials = me.ListField(me.ReferenceField(Credentials))
+    downloads = me.ListField(me.ReferenceField(Download))
+
     meta = {
         "indexes": [
             {
-                "fields": ["session"],
-                "unique": True
+                "fields": ["session", "sensor_ip"],
+                "unique": Truecd""
             },
             {"fields": ["source_ip"]},
             {"fields": ["sensor_ip"]},
             {"fields": ["start_time"]}
         ]
     }
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = self.to_mongo()
+
+        response["start_time"] = self.start_time.isoformat()
+        if "end_time" in response:
+            response["end_time"] = self.end_time.isoformat()
+        response.pop("_id", None)
+
+        response["sensor"] = self.sensor.to_dict()
+        response["fingerprints"] = [item.to_dict() for
+                                    item in self.fingerprints]
+        response["commands"] = [item.to_dict() for
+                                item in self.commands]
+        response["credentials"] = [item.to_dict() for
+                                   item in self.credentials]
+        response["downloads"] = [item.to_dict() for
+                                 item in self.downloads]
+
+        return response
+
+    def to_json(self):
+        """Hijack class method to return our dict."""
+        return json.dumps(self.to_dict())

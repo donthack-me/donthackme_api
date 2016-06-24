@@ -13,101 +13,51 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# 'cowrie.session.connect'
-# 'cowrie.login.success'
-# 'cowrie.login.failed'
-# 'cowrie.command.success'
-# 'cowrie.command.failed'
-# 'cowrie.session.file_download'
-# 'cowrie.client.version'
-# 'cowrie.client.size'
-# 'cowrie.session.closed'
-# 'cowrie.log.closed'
-# 'cowrie.client.fingerprint'
-
-from flask import Flask, request, jsonify
+from flask import Flask
 
 from flask_mongoengine import MongoEngine
-from mongoengine import errors
 
-import json
+from cowrie_api.events.views import events
 
-from cowrie_api import auth
-from cowrie_api.models import (Session,
-                               Credentials,
-                               Command,
-                               Download)
+DEFAULT_BLUEPRINTS = [
+    events
+]
 
 
-app = Flask(__name__)
-app.config.from_object('cowrie_api.default_config')
-try:
+def configure_blueprints(app, blueprints):
+    """Configure blueprints in views."""
+    for blueprint in blueprints:
+        app.register_blueprint(blueprint)
+
+
+def configure_app(app):
+    """Retrieve App Configuration."""
+    app.config.from_object('cowrie_api.default_config')
+    print("doin it...")
     app.config.from_envvar('COWRIE_API_SETTINGS')
-except:
-    pass
-db = MongoEngine(app)
-
-VERSION = app.config.get("API_VERSION")
+    print app.config.get("MONGODB_SETTINGS")
 
 
-@app.route("/{0}/log".format(VERSION), methods=["POST"])
-@auth.requires_auth
-def log_entry():
-    """Apply incoming log entry to session object in MongoEngine."""
-    entry = request.get_json()
+def create_app(app_name=None, blueprints=None):
+    """Create the flask app."""
+    if app_name is None:
+        app_name = "cowrie_api"
+    if blueprints is None:
+        blueprints = DEFAULT_BLUEPRINTS
 
-    if entry["eventid"] == "cowrie.session.connect":
-        session = Session.from_json(json.dumps(entry["payload"])).save()
-        return session.to_json()
-    else:
-        try:
-            session = Session.objects.get(session=entry["payload"]["session"])
-        except errors.DoesNotExist:
-            msg = "Session {0} Not Found.".format(entry["payload"]["session"])
-            return jsonify(error=msg), 404
+    app = Flask(app_name)
 
-        if entry["eventid"] in ['cowrie.client.version',
-                                'cowrie.client.size'
-                                'cowrie.session.closed',
-                                'cowrie.log.closed',
-                                'cowrie.client.fingerprint']:
+    configure_app(app)
 
-            session.update(**entry["payload"])
-            session.reload()
-            return session.to_json()
+    db = MongoEngine()
+    db.app = app
+    db.init_app(app)
 
-        elif entry["eventid"] in ['cowrie.login.success',
-                                  'cowrie.login.failed']:
+    configure_blueprints(app, blueprints)
 
-            session = Session.objects.get(session=entry["payload"]["session"])
-            creds = json.dumps(entry["payload"]["credential"])
-            creds = Credentials.from_json(creds)
-            session.update(push__credentials=creds)
-            session.reload()
-            return session.to_json()
+    return app
 
-        elif entry["eventid"] in['cowrie.command.success',
-                                 'cowrie.command.failed']:
-
-            session = Session.objects.get(session=entry["payload"]["session"])
-            cmd = json.dumps(entry["payload"]["command"])
-            cmd = Command.from_json(cmd)
-            session.update(push__commands=cmd)
-            session.reload()
-            return session.to_json()
-
-        elif entry["eventid"] == 'cowrie.session.file_download':
-
-            session = Session.objects(session=entry["payload"]["session"])
-            download = json.dumps(entry["payload"]["download"])
-            download = Download.from_json(download)
-            session.update(push__downloads=download)
-            session.reload()
-            return session.to_json()
-
-        else:
-            msg = "eventid type {0} not recognized.".format(entry["eventid"])
-            return jsonify(error=msg), 422
 
 if __name__ == "__main__":
+    app = create_app(app_name=__name__)
     app.run(host="0.0.0.0", port=5000, debug=True)
