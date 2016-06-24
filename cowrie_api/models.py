@@ -180,7 +180,7 @@ class TtySize(me.EmbeddedDocument):
 class TtyLog(me.EmbeddedDocument):
     """TTY Log Subdocument."""
 
-    size = me.StringField()
+    size = me.IntField()
     log = me.StringField()
 
 
