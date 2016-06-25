@@ -1,3 +1,4 @@
 flask
 flask_mongoengine
 python-dateutil
+uwsgi
