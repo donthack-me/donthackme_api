@@ -17,14 +17,14 @@ from flask import request, jsonify, Blueprint
 
 from mongoengine import errors
 
-from cowrie_api import auth
-from cowrie_api.models import (Sensor,
-                               Session,
-                               Credentials,
-                               Command,
-                               Download,
-                               Fingerprint,
-                               TcpConnection)
+from donthackme_api import auth
+from donthackme_api.models import (Sensor,
+                                   Session,
+                                   Credentials,
+                                   Command,
+                                   Download,
+                                   Fingerprint,
+                                   TcpConnection)
 
 import base64
 import json

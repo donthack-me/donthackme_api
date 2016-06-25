@@ -1,4 +1,4 @@
-"""Cowrie Frontend API WSGI File."""
+"""Shell command to run cowrie_api without WSGI."""
 # Copyright 2016 Russell Troxel
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,17 +13,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from cowrie_api import app
+from donthackme_api.app import create_app
 
-# Add the app's directory to the PYTHONPATH
-BASE_DIR = os.path.join(os.path.dirname(__file__))
+app = create_app(app_name=__name__)
 
-# Activate your virtual env
-activate_env = os.path.join(BASE_DIR, "venv/bin/activate_this.py")
-execfile(activate_env, dict(__file__=activate_env))
-
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
-
-# Give WSGI the "application"
-appplication = app.create_app()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)

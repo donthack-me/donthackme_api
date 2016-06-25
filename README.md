@@ -1,6 +1,6 @@
 ## THIS PROJECT IS IN DEVELOPMENT STATUS, AND SHOULD NOT BE CONSIDERED PRODUCTION READY.
 
-Cowrie-API
+DontHack.Me API
 ==========
 
 This project serves as an authenticated API backend for the [Cowrie Honepot][1]. This API will be used to promote unidirectional data flow, for distributed collection of attack vector information.
@@ -30,8 +30,8 @@ Running The Server
 To run the server, set the path to your config file, and then simply run the executable:
 
 ```bash
-~/cowrie_api [ export COWRIE_API_SETTINGS=cowrie_api/config.py
-~/cowrie_api [ python app.py
+~/donthackme_api [ export DONTHACKME_API_SETTINGS=donthackme_api/config.py
+~/donthackme [ python app.py
 ```
 
 TODO

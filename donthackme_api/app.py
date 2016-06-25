@@ -17,7 +17,7 @@ from flask import Flask
 
 from flask_mongoengine import MongoEngine
 
-from cowrie_api.events.views import events
+from donthackme_api.events.views import events
 
 DEFAULT_BLUEPRINTS = [
     events
