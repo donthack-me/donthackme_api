@@ -35,7 +35,6 @@ def configure_blueprints(app, blueprints):
 def configure_app(app):
     """Retrieve App Configuration."""
     app.config.from_object('donthackme_api.default_config')
-    print("doin it...")
     app.config.from_envvar('DONTHACKME_API_SETTINGS')
     print app.config.get("MONGODB_SETTINGS")
 

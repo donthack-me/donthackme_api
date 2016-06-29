@@ -24,12 +24,21 @@ from donthackme_api.models import (Sensor,
                                    Command,
                                    Download,
                                    Fingerprint,
-                                   TcpConnection)
+                                   TcpConnection,
+                                   TransactionLog)
 
 import base64
 import json
 
 events = Blueprint('events', __name__, url_prefix="/events")
+
+
+def log_save(doc_class, doc_instance):
+    """Report document change to capped collection."""
+    TransactionLog(
+        collection=doc_class._get_collection_name(),
+        doc_id=doc_instance.id
+    )
 
 
 @events.route("/session/connect", methods=["POST"])
@@ -38,11 +47,13 @@ def session_connect():
     """Apply incoming log entry to session object in MongoEngine."""
     payload = request.get_json()
     try:
-        Sensor(
+        sensor = Sensor(
             name=payload["sensor_name"],
             ip=payload["sensor_ip"],
             timestamp=payload["start_time"]
         ).save()
+        log_save(Sensor, sensor)
+
     except errors.NotUniqueError:
         pass
 
@@ -53,6 +64,8 @@ def session_connect():
         session = Session.from_json(json.dumps(payload))
         session.sensor = sensor
         session.save()
+        log_save(Session, session)
+
     except errors.NotUniqueError:
         msg = "Session {0} Already Exists".format(payload["session"])
         return jsonify(error=msg), 409
@@ -86,6 +99,7 @@ def update_session():
 
     session.update(**payload)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -116,6 +130,7 @@ def close_ttylog():
     payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -141,8 +156,10 @@ def add_login_attempt():
         return jsonify(error=msg), 404
 
     creds = Credentials.from_json(json.dumps(payload)).save()
+    log_save(Credentials, creds)
     session.update(push__credentials=creds)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -168,8 +185,10 @@ def add_command():
         return jsonify(error=msg), 404
 
     cmd = Command.from_json(json.dumps(payload)).save()
+    log_save(Command, cmd)
     session.update(push__commands=cmd)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -193,8 +212,10 @@ def add_download():
         return jsonify(error=msg), 404
 
     download = Download.from_json(json.dumps(payload)).save()
+    log_save(Download, download)
     session.update(push__downloads=download)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -218,8 +239,10 @@ def add_fingerprint():
         return jsonify(error=msg), 404
 
     fingerprint = Fingerprint.from_json(json.dumps(payload)).save()
+    log_save(Fingerprint, fingerprint)
     session.update(push__fingerprints=fingerprint)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202
 
 
@@ -241,6 +264,8 @@ def add_connection():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
     tcp = TcpConnection.from_json(json.dumps(payload)).save()
+    log_save(TcpConnection, tcp)
     session.update(push__tcpconnections=tcp)
     session.reload()
+    log_save(Session, session)
     return session.to_json(), 202

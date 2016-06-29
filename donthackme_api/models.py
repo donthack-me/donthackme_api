@@ -16,6 +16,21 @@
 import json
 import mongoengine as me
 
+from datetime import datetime
+
+
+class TransactionLog(me.Document):
+    """Capped Collection to Log transactions."""
+
+    timestamp = me.DateTimeField(
+        required=True,
+        default=datetime.utcnow()
+    )
+    collection = me.StringField(required=True)
+    doc_id = me.DynamicField()
+
+    meta = {"max_documents": 100000}
+
 
 class Sensor(me.Document):
     """Register all Sensors."""
@@ -235,6 +250,7 @@ class Session(me.Document):
     fingerprints = me.ListField(me.ReferenceField(Fingerprint))
     commands = me.ListField(me.ReferenceField(Command))
     credentials = me.ListField(me.ReferenceField(Credentials))
+
     downloads = me.ListField(me.ReferenceField(Download))
     tcpconnections = me.ListField(me.ReferenceField(TcpConnection))
 
