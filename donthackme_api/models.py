@@ -21,7 +21,8 @@ class Sensor(me.Document):
     """Register all Sensors."""
 
     timestamp = me.DateTimeField(required=True)
-    ip = me.StringField(required=True)
+    name = me.StringField(required=True)
+    ip = me.StringField()
 
     meta = {
         "indexes": [
@@ -46,6 +47,7 @@ class Command(me.Document):
     """Command Subdocument (Listed)."""
 
     session = me.ReferenceField('Session')
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     timestamp = me.DateTimeField(required=True)
     command = me.StringField()
@@ -78,6 +80,7 @@ class Credentials(me.Document):
     """Credential Subdocument."""
 
     session = me.ReferenceField('Session')
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     username = me.StringField()
     password = me.StringField()
@@ -111,6 +114,7 @@ class Fingerprint(me.Document):
     """Fingerprint Subdocument."""
 
     session = me.ReferenceField('Session')
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     username = me.StringField()
     fingerprint = me.StringField()
@@ -142,6 +146,7 @@ class Download(me.Document):
     """Download Subdocument (Listed)."""
 
     session = me.ReferenceField('Session')
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     timestamp = me.DateTimeField()
     realm = me.StringField()
@@ -174,6 +179,7 @@ class TcpConnection(me.Document):
     """TcpConnection Subdocument (Listed)."""
 
     session = me.ReferenceField('Session')
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     timestamp = me.DateTimeField()
     dest_port = me.IntField()
@@ -215,6 +221,7 @@ class Session(me.Document):
     start_time = me.DateTimeField()
     end_time = me.DateTimeField()
     source_ip = me.StringField()
+    sensor_name = me.StringField()
     sensor_ip = me.StringField()
     ttylog = me.EmbeddedDocumentField(TtyLog)
     ttysize = me.EmbeddedDocumentField(TtySize)

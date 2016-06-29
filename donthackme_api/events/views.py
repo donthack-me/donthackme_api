@@ -1,4 +1,4 @@
-"""Events Blueprint for collecting data."""
+db"""Events Blueprint for collecting data."""
 # Copyright 2016 Russell Troxel
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -39,6 +39,7 @@ def session_connect():
     payload = request.get_json()
     try:
         Sensor(
+            name=payload["sensor_name"],
             ip=payload["sensor_ip"],
             timestamp=payload["start_time"]
         ).save()
@@ -46,7 +47,10 @@ def session_connect():
         pass
 
     try:
-        sensor = Sensor.objects.get(ip=payload["sensor_ip"])
+        sensor = Sensor.objects.get(
+            name=payload["sensor_name"],
+            ip=payload["sensor_ip"]
+        )
         session = Session.from_json(json.dumps(payload))
         session.sensor = sensor
         session.save()
