@@ -1,4 +1,4 @@
-db"""Events Blueprint for collecting data."""
+"""Events Blueprint for collecting data."""
 # Copyright 2016 Russell Troxel
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
