@@ -48,8 +48,7 @@ def session_connect():
 
     try:
         sensor = Sensor.objects.get(
-            name=payload["sensor_name"],
-            ip=payload["sensor_ip"]
+            name=payload["sensor_name"]
         )
         session = Session.from_json(json.dumps(payload))
         session.sensor = sensor
@@ -79,7 +78,7 @@ def update_session():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -107,7 +106,7 @@ def close_ttylog():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -135,7 +134,7 @@ def add_login_attempt():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -162,7 +161,7 @@ def add_command():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -187,7 +186,7 @@ def add_download():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -212,7 +211,7 @@ def add_fingerprint():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
@@ -236,7 +235,7 @@ def add_connection():
     try:
         session = Session.objects.get(
             session=payload["session"],
-            sensor_ip=payload["sensor_ip"]
+            sensor_name=payload["sensor_name"]
         )
     except errors.DoesNotExist:
         msg = "Session {0} Not Found.".format(payload["session"])
