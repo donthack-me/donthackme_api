@@ -220,7 +220,7 @@ def add_fingerprint():
     return session.to_json(), 202
 
 
-@events.route("/cdirect-tcpip/request")
+@events.route("/cdirect-tcpip/request", methods=["PUT"])
 def add_connection():
     """
     Process non-SSH connection.
