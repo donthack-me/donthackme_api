@@ -28,6 +28,7 @@ class TransactionLog(me.Document):
     )
     collection = me.StringField(required=True)
     doc_id = me.DynamicField()
+    sequence_number = me.SequenceField()
 
     meta = {"max_documents": 100000}
 
