@@ -13,12 +13,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from flask import Flask
 
 from flask_mongoengine import MongoEngine
 
 from donthackme_api.events.views import events
 from donthackme_api.admin.views import admin
+
 
 DEFAULT_BLUEPRINTS = [
     events,
@@ -37,6 +40,19 @@ def configure_app(app):
     app.config.from_object('donthackme_api.default_config')
     app.config.from_envvar('DONTHACKME_API_SETTINGS')
     print app.config.get("MONGODB_SETTINGS")
+
+
+def configure_logging(app):
+    """Add Rotating Handler to app."""
+    logfile = app.config.get('LOG_FILE')
+    handler = logging.TimedRotatingFileHandler(
+        logfile,
+        when='h',
+        interval=24,
+        backupCount=30
+    )
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
 
 
 def create_app(app_name=None, blueprints=None):

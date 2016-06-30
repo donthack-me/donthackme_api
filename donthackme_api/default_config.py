@@ -15,3 +15,5 @@ PASSWORD_LENGTH = 24
 
 # Flask Settings
 JSONIFY_PRETTYPRINT_REGULAR = True
+
+LOG_FILE = './donthackme_api.log'
