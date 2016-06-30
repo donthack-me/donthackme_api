@@ -38,7 +38,7 @@ def log_save(doc_class, doc_instance):
     TransactionLog(
         collection=doc_class._get_collection_name(),
         doc_id=doc_instance.id
-    )
+    ).save()
 
 
 @events.route("/session/connect", methods=["POST"])
