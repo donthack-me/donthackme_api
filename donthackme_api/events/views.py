@@ -53,7 +53,8 @@ def get_or_insert_sensor(payload):
         return sensor
     except errors.NotUniqueError:
         sensor = Sensor.objects.get(
-            name=payload["sensor_name"]
+            name=payload["sensor_name"],
+            ip=payload["sensor_ip"]
         )
         return sensor
 
