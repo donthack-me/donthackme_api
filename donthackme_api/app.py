@@ -52,6 +52,10 @@ def configure_logging(app):
         interval=24,
         backupCount=30
     )
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
 
