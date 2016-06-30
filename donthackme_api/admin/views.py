@@ -23,7 +23,7 @@ admin = Blueprint('admin', __name__, url_prefix="/admin")
 @admin.route("/health", methods=["GET"])
 def test_health():
     try:
-        sensor = Sensor.objects()[0]
+        Sensor.objects()
     except:
         return "Couldn't connect to DB!", 500
     else:
