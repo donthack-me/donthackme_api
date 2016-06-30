@@ -45,7 +45,7 @@ def configure_app(app):
 def configure_logging(app):
     """Add Rotating Handler to app."""
     logfile = app.config.get('LOG_FILE')
-    handler = logging.TimedRotatingFileHandler(
+    handler = logging.handlers.TimedRotatingFileHandler(
         logfile,
         when='h',
         interval=24,
@@ -65,6 +65,7 @@ def create_app(app_name=None, blueprints=None):
     app = Flask(app_name)
 
     configure_app(app)
+    configure_logging(app)
 
     db = MongoEngine()
     db.app = app
