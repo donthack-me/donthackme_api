@@ -93,8 +93,6 @@ def update_session():
     """
     payload = request.get_json()
 
-    sensor = get_or_insert_sensor(payload)
-
     try:
         session = Session.objects.get(
             session=payload["session"],
