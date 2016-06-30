@@ -13,7 +13,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, current_app
 
 from mongoengine import errors
 
@@ -41,11 +41,8 @@ def log_save(doc_class, doc_instance):
     ).save()
 
 
-@events.route("/session/connect", methods=["POST"])
-@auth.requires_auth
-def session_connect():
-    """Apply incoming log entry to session object in MongoEngine."""
-    payload = request.get_json()
+def get_or_insert_sensor(payload):
+    """Insert Sensor if doesn't exist."""
     try:
         sensor = Sensor(
             name=payload["sensor_name"],
@@ -53,14 +50,21 @@ def session_connect():
             timestamp=payload["start_time"]
         ).save()
         log_save(Sensor, sensor)
-
+        return sensor
     except errors.NotUniqueError:
-        pass
-
-    try:
         sensor = Sensor.objects.get(
             name=payload["sensor_name"]
         )
+        return sensor
+
+
+@events.route("/session/connect", methods=["POST"])
+@auth.requires_auth
+def session_connect():
+    """Apply incoming log entry to session object in MongoEngine."""
+    payload = request.get_json()
+    sensor = get_or_insert_sensor(payload)
+    try:
         session = Session.from_json(json.dumps(payload))
         session.sensor = sensor
         session.save()
@@ -88,17 +92,24 @@ def update_session():
     """
     payload = request.get_json()
 
+    sensor = get_or_insert_sensor(payload)
+
     try:
         session = Session.objects.get(
             session=payload["session"],
             sensor_name=payload["sensor_name"]
         )
-    except errors.DoesNotExist:
-        msg = "Session {0} Not Found.".format(payload["session"])
-        return jsonify(error=msg), 404
+        session.update(**payload)
+        session.reload()
 
-    session.update(**payload)
-    session.reload()
+    except errors.DoesNotExist:
+        msg = "update_session: session {0} does not exist, inserting."
+        current_app.logger.debug(msg.format(payload["session"]))
+
+        session = Session.from_json(json.dumps(payload))
+        session.sensor = sensor
+        session.save()
+
     log_save(Session, session)
     return session.to_json(), 202
 
