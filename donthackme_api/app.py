@@ -14,6 +14,7 @@
 # under the License.
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask
 
@@ -45,7 +46,7 @@ def configure_app(app):
 def configure_logging(app):
     """Add Rotating Handler to app."""
     logfile = app.config.get('LOG_FILE')
-    handler = logging.handlers.TimedRotatingFileHandler(
+    handler = TimedRotatingFileHandler(
         logfile,
         when='h',
         interval=24,
