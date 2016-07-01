@@ -24,7 +24,6 @@ from donthackme_api.models import (Sensor,
                                    Command,
                                    Download,
                                    Fingerprint,
-                                   TcpConnection,
                                    TransactionLog)
 
 import base64
@@ -106,7 +105,6 @@ def update_session():
         current_app.logger.debug(msg.format(payload["session"]))
 
         session = Session.from_json(json.dumps(payload))
-        session.sensor = sensor
         session.save()
 
     log_save(Session, session)
@@ -264,18 +262,19 @@ def add_connection():
     This includes:
         cowrie.direct-tcpip.request
     """
-    payload = request.get_json()
-    try:
-        session = Session.objects.get(
-            session=payload["session"],
-            sensor_name=payload["sensor_name"]
-        )
-    except errors.DoesNotExist:
-        msg = "Session {0} Not Found.".format(payload["session"])
-        return jsonify(error=msg), 404
-    tcp = TcpConnection.from_json(json.dumps(payload)).save()
-    log_save(TcpConnection, tcp)
-    session.update(push__tcpconnections=tcp)
-    session.reload()
-    log_save(Session, session)
-    return session.to_json(), 202
+    # payload = request.get_json()
+    # try:
+    #     session = Session.objects.get(
+    #         session=payload["session"],
+    #         sensor_name=payload["sensor_name"]
+    #     )
+    # except errors.DoesNotExist:
+    #     msg = "Session {0} Not Found.".format(payload["session"])
+    #     return jsonify(error=msg), 404
+    # tcp = TcpConnection.from_json(json.dumps(payload)).save()
+    # log_save(TcpConnection, tcp)
+    # session.update(push__tcpconnections=tcp)
+    # session.reload()
+    # log_save(Session, session)
+    # return session.to_json(), 202
+    return '{"msg": "no longer implemented."}', 202
