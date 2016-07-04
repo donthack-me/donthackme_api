@@ -68,7 +68,6 @@ def session_connect():
         session = Session.from_json(json.dumps(payload))
         session.sensor = sensor
         session.save()
-        log_save(Session, session)
 
     except errors.NotUniqueError:
         msg = "Session {0} Already Exists".format(payload["session"])
@@ -79,7 +78,6 @@ def session_connect():
 
 @events.route("/client/version", methods=["PUT"])
 @events.route("/client/size", methods=["PUT"])
-@events.route("/session/closed", methods=["PUT"])
 @auth.requires_auth
 def update_session():
     """
@@ -88,6 +86,34 @@ def update_session():
     This includes:
         cowrie.client.version
         cowrie.client.size
+    """
+    payload = request.get_json()
+
+    try:
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor_name=payload["sensor_name"]
+        )
+        session.update(**payload)
+        session.reload()
+
+    except errors.DoesNotExist:
+        msg = "update_session: session {0} does not exist, inserting."
+        current_app.logger.debug(msg.format(payload["session"]))
+
+        session = Session.from_json(json.dumps(payload))
+        session.save()
+
+    return session.to_json(), 202
+
+
+@events.route("/session/closed", methods=["PUT"])
+@auth.requires_auth
+def close_session():
+    """
+    Process events which require normal, atomic updates.
+
+    This includes:
         cowrie.session.closed
     """
     payload = request.get_json()
@@ -138,7 +164,6 @@ def close_ttylog():
     payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
     session.reload()
-    log_save(Session, session)
     return session.to_json(), 202
 
 
