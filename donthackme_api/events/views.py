@@ -194,7 +194,6 @@ def add_login_attempt():
     log_save(Credentials, creds)
     session.update(push__credentials=creds)
     session.reload()
-    log_save(Session, session)
     return STANDARD_RESPONSE, 202
 
 
@@ -223,7 +222,6 @@ def add_command():
     log_save(Command, cmd)
     session.update(push__commands=cmd)
     session.reload()
-    log_save(Session, session)
     return STANDARD_RESPONSE, 202
 
 
@@ -250,7 +248,6 @@ def add_download():
     log_save(Download, download)
     session.update(push__downloads=download)
     session.reload()
-    log_save(Session, session)
     return STANDARD_RESPONSE, 202
 
 
@@ -277,7 +274,6 @@ def add_fingerprint():
     log_save(Fingerprint, fingerprint)
     session.update(push__fingerprints=fingerprint)
     session.reload()
-    log_save(Session, session)
     return STANDARD_RESPONSE, 202
 
 
