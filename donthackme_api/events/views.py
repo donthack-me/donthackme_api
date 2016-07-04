@@ -31,6 +31,8 @@ import json
 
 events = Blueprint('events', __name__, url_prefix="/events")
 
+STANDARD_RESPONSE = '{"acknowledged": true}'
+
 
 def log_save(doc_class, doc_instance):
     """Report document change to capped collection."""
@@ -73,7 +75,7 @@ def session_connect():
         msg = "Session {0} Already Exists".format(payload["session"])
         return jsonify(error=msg), 409
     session.reload()
-    return session.to_json(), 201
+    return STANDARD_RESPONSE, 201
 
 
 @events.route("/client/version", methods=["PUT"])
@@ -104,7 +106,7 @@ def update_session():
         session = Session.from_json(json.dumps(payload))
         session.save()
 
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/session/closed", methods=["PUT"])
@@ -134,7 +136,7 @@ def close_session():
         session.save()
 
     log_save(Session, session)
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/log/closed", methods=["PUT"])
@@ -164,7 +166,7 @@ def close_ttylog():
     payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
     session.reload()
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/login/success", methods=["PUT"])
@@ -193,7 +195,7 @@ def add_login_attempt():
     session.update(push__credentials=creds)
     session.reload()
     log_save(Session, session)
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/command/success", methods=["PUT"])
@@ -222,7 +224,7 @@ def add_command():
     session.update(push__commands=cmd)
     session.reload()
     log_save(Session, session)
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/session/file_download", methods=["PUT"])
@@ -249,7 +251,7 @@ def add_download():
     session.update(push__downloads=download)
     session.reload()
     log_save(Session, session)
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/client/fingerprint", methods=["PUT"])
@@ -276,7 +278,7 @@ def add_fingerprint():
     session.update(push__fingerprints=fingerprint)
     session.reload()
     log_save(Session, session)
-    return session.to_json(), 202
+    return STANDARD_RESPONSE, 202
 
 
 @events.route("/cdirect-tcpip/request", methods=["PUT"])
