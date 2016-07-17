@@ -1,5 +1,6 @@
 flask
-pymongo==2.8
+pymongo
 flask_mongoengine
 python-dateutil
 uwsgi
+passlib

@@ -1,24 +1,43 @@
 """Authentication functions for cowrie API."""
 
-from flask import request, jsonify  # , g
+from flask import request, jsonify, g
 from functools import wraps
+
+from models import User
+
+from mongoengine import errors
 
 
 def check_auth(headers):
     """Return True when token is valid."""
-    if "X-Auth-Token" in headers:
-        return True
+    if "X-JWT" in headers:
+        user = User.verify_auth_token(headers["X-JWT"])
+        if user is not None:
+            g.user = user
+            return True
+    elif "X-Auth-Token" in headers:
+        try:
+            user = User.objects.get(
+                api_key=headers["X-Auth-Token"],
+                version=1,
+                deleted=0
+            )
+        except errors.DoesNotExist:
+            return False
+        else:
+            g.user = user
+            return True
     return False
 
 
-def requires_auth(f):
-    """Decorate Flask Route to require LDAP Auth."""
+def requires_token(f):
+    """Decorate Flask Route to require Token."""
     @wraps(f)
     def decorated(*args, **kwargs):
         headers = request.headers
-        required_headers = ["X-Auth-Token"]
+        required_headers = ["X-Auth-Token", "X-JWT"]
 
-        if not all(x in headers for x in required_headers):
+        if not any(x in headers for x in required_headers):
             err = "Required Headers: {0}"
             return jsonify(error=err.format(",".join(required_headers))), 401
 
