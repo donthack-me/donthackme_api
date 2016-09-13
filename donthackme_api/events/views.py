@@ -280,7 +280,7 @@ def add_fingerprint():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
-    fingerprint = Fingerprint.from_json(**payload).save()
+    fingerprint = Fingerprint(**payload).save()
     log_save(Fingerprint, fingerprint)
     session.update(push__fingerprints=fingerprint)
     return STANDARD_RESPONSE, 202
