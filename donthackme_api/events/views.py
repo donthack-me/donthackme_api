@@ -24,10 +24,10 @@ from donthackme_api.models import (Sensor,
                                    Command,
                                    Download,
                                    Fingerprint,
-                                   TransactionLog)
+                                   TransactionLog,
+                                   TcpConnection)
 
 import base64
-import json
 
 events = Blueprint('events', __name__, url_prefix="/events")
 
@@ -61,26 +61,25 @@ def get_or_insert_sensor(payload):
 
 
 @events.route("/session/connect", methods=["POST"])
-@auth.requires_auth
+@auth.requires_token
 def session_connect():
     """Apply incoming log entry to session object in MongoEngine."""
     payload = request.get_json()
     sensor = get_or_insert_sensor(payload)
     try:
-        session = Session.from_json(json.dumps(payload))
+        session = Session(**payload)
         session.sensor = sensor
         session.save()
 
     except errors.NotUniqueError:
         msg = "Session {0} Already Exists".format(payload["session"])
         return jsonify(error=msg), 409
-    session.reload()
     return STANDARD_RESPONSE, 201
 
 
 @events.route("/client/version", methods=["PUT"])
 @events.route("/client/size", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def update_session():
     """
     Process events which require normal, atomic updates.
@@ -97,20 +96,19 @@ def update_session():
             sensor_name=payload["sensor_name"]
         )
         session.update(**payload)
-        session.reload()
 
     except errors.DoesNotExist:
         msg = "update_session: session {0} does not exist, inserting."
         current_app.logger.debug(msg.format(payload["session"]))
 
-        session = Session.from_json(json.dumps(payload))
+        session = Session(**payload)
         session.save()
 
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/session/closed", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def close_session():
     """
     Process events which require normal, atomic updates.
@@ -126,13 +124,12 @@ def close_session():
             sensor_name=payload["sensor_name"]
         )
         session.update(**payload)
-        session.reload()
 
     except errors.DoesNotExist:
         msg = "update_session: session {0} does not exist, inserting."
         current_app.logger.debug(msg.format(payload["session"]))
 
-        session = Session.from_json(json.dumps(payload))
+        session = Session(**payload)
         session.save()
 
     log_save(Session, session)
@@ -140,7 +137,7 @@ def close_session():
 
 
 @events.route("/log/closed", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def close_ttylog():
     """
     Process log closure.
@@ -165,13 +162,12 @@ def close_ttylog():
     b64_ttylog = payload["ttylog"].pop("log_base64")
     payload["ttylog"]["log_binary"] = base64.b64decode(b64_ttylog)
     session.update(**payload)
-    session.reload()
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/login/success", methods=["PUT"])
 @events.route("/login/failed", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def add_login_attempt():
     """
     Process login attempts.
@@ -190,16 +186,15 @@ def add_login_attempt():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
-    creds = Credentials.from_json(json.dumps(payload)).save()
+    creds = Credentials(**payload).save()
     log_save(Credentials, creds)
     session.update(push__credentials=creds)
-    session.reload()
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/command/success", methods=["PUT"])
 @events.route("/command/failed", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def add_command():
     """
     Process Honeypot Commands.
@@ -218,15 +213,14 @@ def add_command():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
-    cmd = Command.from_json(json.dumps(payload)).save()
+    cmd = Command(**payload).save()
     log_save(Command, cmd)
     session.update(push__commands=cmd)
-    session.reload()
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/session/file_download", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def add_download():
     """
     Process Downloads.
@@ -244,15 +238,14 @@ def add_download():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
-    download = Download.from_json(json.dumps(payload)).save()
+    download = Download(**payload).save()
     log_save(Download, download)
     session.update(push__downloads=download)
-    session.reload()
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/client/fingerprint", methods=["PUT"])
-@auth.requires_auth
+@auth.requires_token
 def add_fingerprint():
     """
     Process Downloads.
@@ -270,14 +263,14 @@ def add_fingerprint():
         msg = "Session {0} Not Found.".format(payload["session"])
         return jsonify(error=msg), 404
 
-    fingerprint = Fingerprint.from_json(json.dumps(payload)).save()
+    fingerprint = Fingerprint.from_json(**payload).save()
     log_save(Fingerprint, fingerprint)
     session.update(push__fingerprints=fingerprint)
-    session.reload()
     return STANDARD_RESPONSE, 202
 
 
 @events.route("/cdirect-tcpip/request", methods=["PUT"])
+@auth.requires_token
 def add_connection():
     """
     Process non-SSH connection.
@@ -285,19 +278,18 @@ def add_connection():
     This includes:
         cowrie.direct-tcpip.request
     """
-    # payload = request.get_json()
-    # try:
-    #     session = Session.objects.get(
-    #         session=payload["session"],
-    #         sensor_name=payload["sensor_name"]
-    #     )
-    # except errors.DoesNotExist:
-    #     msg = "Session {0} Not Found.".format(payload["session"])
-    #     return jsonify(error=msg), 404
-    # tcp = TcpConnection.from_json(json.dumps(payload)).save()
-    # log_save(TcpConnection, tcp)
-    # session.update(push__tcpconnections=tcp)
-    # session.reload()
-    # log_save(Session, session)
-    # return session.to_json(), 202
-    return '{"msg": "no longer implemented."}', 202
+    payload = request.get_json()
+    try:
+        session = Session.objects.get(
+            session=payload["session"],
+            sensor_name=payload["sensor_name"]
+        )
+    except errors.DoesNotExist:
+        msg = "Session {0} Not Found.".format(payload["session"])
+        return jsonify(error=msg), 404
+    tcp = TcpConnection(**payload).save()
+    log_save(TcpConnection, tcp)
+    session.update(push__tcpconnections=tcp)
+    session.reload()
+    log_save(Session, session)
+    return session.to_json(), 202

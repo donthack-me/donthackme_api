@@ -22,11 +22,13 @@ from flask_mongoengine import MongoEngine
 
 from donthackme_api.events.views import events
 from donthackme_api.admin.views import admin
+from donthackme_api.users.views import users
 
 
 DEFAULT_BLUEPRINTS = [
     events,
-    admin
+    admin,
+    users
 ]
 
 

@@ -2,3 +2,4 @@ config.py
 *.pyc
 venv
 venv/*
+donthackme_api.log

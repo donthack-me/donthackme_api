@@ -14,9 +14,136 @@
 # under the License.
 
 import json
+import uuid
+
 import mongoengine as me
 
+from bson import objectid
 from datetime import datetime
+
+from flask import current_app
+
+from passlib.apps import custom_app_context as pwd_context
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
+
+
+class User(me.Document):
+    """User Document for Auth."""
+
+    username = me.StringField(required=True)
+    email = me.EmailField(required=True)
+    password_hash = me.StringField(required=True)
+    api_key = me.UUIDField(
+        required=True,
+        default=uuid.uuid4()
+    )
+    roles = me.ListField(
+        me.StringField(),
+        required=True,
+        default=["user"]
+    )
+    version = me.IntField()
+    deleted = me.DynamicField(required=True, default=0)
+    deleted_at = me.DateTimeField()
+    created_at = me.DateTimeField(
+        required=True,
+        default=datetime.utcnow()
+    )
+    updated_at = me.DateTimeField(
+        required=True,
+        default=datetime.utcnow()
+    )
+
+    meta = {
+        "indexes": [
+            {"fields": ["username", "deleted"], "unique": True},
+            {"fields": ["email", "deleted"], "unique": True},
+            {"fields": ["api_key", "deleted"], "unique": True},
+        ]
+    }
+
+    def __init__(self, password=None, **kwargs):
+        """init."""
+        if password is not None:
+            kwargs["password_hash"] = self.hash_password(password)
+        super(User, self).__init__(**kwargs)
+
+    def update(self, password=None, **kwargs):
+        """Override Update Function."""
+        if password is not None:
+            kwargs["password_hash"] = self.hash_password(password)
+        super(User, self).update(**kwargs)
+
+    @classmethod
+    def pre_save(cls, sender, document, **kwargs):
+        """Force updated_at on save."""
+        document.updated_at = datetime.utcnow()
+
+    def hash_password(self, password):
+        """Create Hash from cleartext password."""
+        return pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        """Verify password against hash."""
+        return pwd_context.verify(password, self.password_hash)
+
+    def generate_auth_token(self, expiration=14400):
+        """Generate a token for the user."""
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({
+            'id': str(self.id)
+        })
+
+    @staticmethod
+    def verify_auth_token(token):
+        """Verify that a token is valid."""
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+            current_app.logger.info(data)
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+        user = User.objects(id=objectid.ObjectId(data['id'])).first()
+        return user
+
+    def reset_api_key(self):
+        """Generate new API Key for account."""
+        self.api_key = uuid.uuid4()
+
+    def is_admin(self):
+        """Test if admin."""
+        if "admin" in self.roles:
+            return True
+        return False
+
+    def is_user(self):
+        """Test if user."""
+        if "user" in self.roles:
+            return True
+        return False
+
+    def delete(self):
+        """Mark as deleted in the database."""
+        self.deleted = str(self.id)
+        self.deleted_at = datetime.utcnow()
+        self.save()
+
+    def to_dict(self):
+        """Convert object to a sanitized python dictionary."""
+        response = {
+            "id": str(self.id),
+            "username": self.username,
+            "email": self.email,
+            "api_key": self.api_key
+        }
+        return response
+
+    def to_json(self):
+        """Convert to json string."""
+        return json.dumps(self.to_dict())
 
 
 class TransactionLog(me.Document):
