@@ -29,6 +29,7 @@ from donthackme_api.models import (Sensor,
                                    TcpConnection)
 
 import base64
+import re
 
 events = Blueprint('events', __name__, url_prefix="/events")
 
@@ -43,8 +44,23 @@ def log_save(doc_class, doc_instance):
     ).save()
 
 
+def fix_ip(string):
+    """
+    This function removes extraneous characters around an IP.
+
+    This fixes a current bug in cowrie, where ::ffff: appears at
+    the beginning of dst_ip.
+    """
+    pattern = r".*\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\b"
+    match = re.match(pattern, string)
+    if match is not None:
+        return match.group(1)
+    return string
+
+
 def get_or_insert_sensor(payload):
     """Insert Sensor if doesn't exist."""
+    payload["sensor_ip"] = fix_ip(payload["sensor_ip"])
     try:
         sensor = Sensor(
             name=payload["sensor_name"],
