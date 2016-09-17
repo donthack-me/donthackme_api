@@ -29,6 +29,20 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 
+def fix_ip(string):
+    """
+    This function removes extraneous characters around an IP.
+
+    This fixes a current bug in cowrie, where ::ffff: appears at
+    the beginning of dst_ip.
+    """
+    pattern = r".*\:((?:[0-9]{1,3}\.){3}[0-9]{1,3})\b"
+    match = re.match(pattern, string)
+    if match is not None:
+        return match.group(1)
+    return string
+
+
 class User(me.Document):
     """User Document for Auth."""
 
@@ -205,6 +219,12 @@ class Command(me.Document):
             {"fields": ["timestamp"]}
         ]
     }
+
+    def __init__(self, **kwargs):
+        """init."""
+        if "sensor_ip" in kwargs:
+            kwargs["sensor_ip"] = fix_ip(kwargs["sensor_ip"])
+        super(User, self).__init__(**kwargs)
 
     def to_dict(self):
         """Convert object to a sanitized python dictionary."""
