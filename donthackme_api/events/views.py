@@ -58,9 +58,25 @@ def fix_ip(string):
     return string
 
 
+def fix_payload(payload):
+    """
+    Wrapper for fix_ip to resolve issue with any possible IP fields.
+
+    This fixes a current bug in cowrie, where ::ffff: appears at
+    the beginning of dst_ip.
+    """
+    ip_fields = [
+        "source_ip",
+        "sensor_ip"
+    ]
+    for f in ip_fields:
+        if f in payload:
+            payload[f] = fix_ip(payload[f])
+    return payload
+
+
 def get_or_insert_sensor(payload):
     """Insert Sensor if doesn't exist."""
-    payload["sensor_ip"] = fix_ip(payload["sensor_ip"])
     try:
         sensor = Sensor(
             name=payload["sensor_name"],
@@ -81,7 +97,7 @@ def get_or_insert_sensor(payload):
 @auth.requires_token
 def session_connect():
     """Apply incoming log entry to session object in MongoEngine."""
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     sensor = get_or_insert_sensor(payload)
     try:
         session = Session(**payload)
@@ -105,7 +121,7 @@ def update_session():
         cowrie.client.version
         cowrie.client.size
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
 
     try:
         session = Session.objects.get(
@@ -133,7 +149,7 @@ def close_session():
     This includes:
         cowrie.session.closed
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
 
     try:
         session = Session.objects.get(
@@ -165,7 +181,7 @@ def close_ttylog():
     This includes:
         cowrie.log.closed
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
 
     try:
         session = Session.objects.get(
@@ -193,7 +209,7 @@ def add_login_attempt():
         cowrie.login.success
         cowrie.login.failed
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     try:
         session = Session.objects.get(
             session=payload["session"],
@@ -220,7 +236,7 @@ def add_command():
         cowrie.command.success
         cowrie.command.failed
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     try:
         session = Session.objects.get(
             session=payload["session"],
@@ -245,7 +261,7 @@ def add_download():
     This includes:
         cowrie.session.file_download
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     try:
         session = Session.objects.get(
             session=payload["session"],
@@ -270,7 +286,7 @@ def add_fingerprint():
     This includes:
         cowrie.client.fingerprint
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     try:
         session = Session.objects.get(
             session=payload["session"],
@@ -295,7 +311,7 @@ def add_connection():
     This includes:
         cowrie.direct-tcpip.request
     """
-    payload = request.get_json()
+    payload = fix_payload(request.get_json())
     try:
         session = Session.objects.get(
             session=payload["session"],
