@@ -32,7 +32,7 @@ setup(
         'Intended Audience :: Administrators',
         'Topic :: Applications :: Supportability',
 
-        'License :: OSI Approved :: Apache License, Version 2.0',
+        'License :: OSI Approved :: GNU GPL, version 3',
 
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
@@ -50,7 +50,8 @@ setup(
         'flask_mongoengine',
         'python-dateutil',
         'uwsgi',
-        'passslib'
+        'passslib',
+        'Flask-Elasticsearch'
     ],
 
     tests_require=[

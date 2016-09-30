@@ -147,20 +147,6 @@ class User(me.Document):
         return json.dumps(self.to_dict())
 
 
-class TransactionLog(me.Document):
-    """Capped Collection to Log transactions."""
-
-    timestamp = me.DateTimeField(
-        required=True,
-        default=datetime.utcnow()
-    )
-    collection = me.StringField(required=True)
-    doc_id = me.DynamicField()
-    ts = me.SequenceField()
-
-    meta = {"max_documents": 100000}
-
-
 class Sensor(me.Document):
     """Register all Sensors."""
 
@@ -424,3 +410,28 @@ class Session(me.Document):
     def to_json(self):
         """Hijack class method to return our dict."""
         return json.dumps(self.to_dict())
+
+
+class IpLocation(me.Document):
+    """
+    IP Location Database.
+
+    Retrieved from:
+    http://lite.ip2location.com/database/ip-country-region-city-latitude-longitude
+    """
+
+    ip_from = me.LongField()
+    ip_to = me.LongField()
+    country_code = me.StringField()
+    country_name = me.StringField()
+    region_name = me.StringField()
+    city_name = me.StringField()
+    lat = me.FloatField()
+    lon = me.FloatField()
+
+    meta = {
+        "collection": "ip_locations",
+        "indexes": [
+           {"fields": ["ip_to"]}
+        ]
+    }

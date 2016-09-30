@@ -1,10 +1,7 @@
-## THIS PROJECT IS IN DEVELOPMENT STATUS, AND SHOULD NOT BE CONSIDERED PRODUCTION READY.
-
 DontHack.Me API
 ==========
 
 This project serves as an authenticated API backend for the [Cowrie Honepot][1]. This API will be used to promote unidirectional data flow, for distributed collection of attack vector information.
-
 
 
 Configuration
@@ -21,6 +18,7 @@ MONGODB_SETTINGS = {
     "username": "yourusername",
     "password": "your password",
     "ssl": True
+SECRET_KEY = "A LONG SALT FOR USE IN PASSWORD HASHING"
 }
 ```
 

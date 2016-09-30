@@ -19,12 +19,11 @@ from logging.handlers import TimedRotatingFileHandler
 
 from flask import Flask
 
-from flask_mongoengine import MongoEngine
-
 from donthackme_api.events.views import events
 from donthackme_api.admin.views import admin
 from donthackme_api.users.views import users
 
+from donthackme_api import extensions
 
 DEFAULT_BLUEPRINTS = [
     events,
@@ -42,8 +41,7 @@ def configure_blueprints(app, blueprints):
 def configure_app(app):
     """Retrieve App Configuration."""
     app.config.from_object('donthackme_api.default_config')
-    app.config.from_envvar('DONTHACKME_API_SETTINGS')
-    print app.config.get("MONGODB_SETTINGS")
+    app.config.from_object('config.Config')
 
 
 def configure_logging(app):
@@ -75,9 +73,12 @@ def create_app(app_name=None, blueprints=None):
     configure_app(app)
     configure_logging(app)
 
-    db = MongoEngine()
-    db.app = app
-    db.init_app(app)
+    extensions.db.app = app
+
+    extensions.db.init_app(app)
+    extensions.es.init_app(app)
+
+    extensions.celery.conf.update(app.config)
 
     configure_blueprints(app, blueprints)
 
